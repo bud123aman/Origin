@@ -137,6 +137,43 @@ pip install torch torchvision transformers albumentations pillow numpy tqdm matp
 ```
 ---
 
+## 10. Reproducibility & Environment Setup
+
+To ensure exact mathematical replication of the training curves, loss distributions, and dataset splits, global seeds have been rigidly locked across the entire pipeline. Due to the nature of GPU-accelerated training, we also enforce deterministic algorithms in PyTorch to prevent run-to-run variations.
+
+### Global Seed Initialization
+Place this block at the very top of your training and inference scripts, before any data loading or model initialization:
+
+```python
+import os
+import random
+import numpy as np
+import torch
+
+SEED = 42
+
+def seed_everything(seed=42):
+    # Core Python & Numpy
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    
+    # PyTorch Base
+    torch.manual_seed(seed)
+    
+    # PyTorch CUDA & CuDNN
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        # Enforce deterministic convolutions (slightly slower, but perfectly reproducible)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+seed_everything(SEED)
+```
+
+---
+
 ## Contributing
 
 I welcome contributions to this project! Whether it's reporting a bug, suggesting a new feature, improving documentation, or submitting code, your help is highly appreciated.
